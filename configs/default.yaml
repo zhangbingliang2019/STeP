@@ -1,0 +1,11 @@
+wandb:
+  is_wandb: False
+  project: STeP
+  name: blackhole
+
+seed: 37
+gpu: 0
+
+record: False
+save_trajectory: False
+num_samples: 1
