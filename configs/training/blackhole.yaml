@@ -1,7 +1,7 @@
 dataset:
   image:
     name: blackhole_image
-    root: dataset/blackhole_image_50k
+    root: dataset/blackhole_image
     resolution: 256           # resolution of the images
     original_resolution: 400
     random_flip: true

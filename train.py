@@ -28,16 +28,12 @@ def main(cfg):
     else:
         print(f"Model checkpoint for IDM at epoch {idm_epoch} already exists")
         print('Skip IDM training ...')
-    # if not os.path.exists(model_dir / f"ema_vdm_{vdm_epoch:04d}.pth"):
-    #     train_vdm(cfg)
-    # else:
-    #     print(f"Model checkpoint for VDM at epoch {vdm_epoch} already exists")
-    #     print('Skip VDM training ...')
+    if not os.path.exists(model_dir / f"ema_vdm_{vdm_epoch:04d}.pth"):
+        train_vdm(cfg)
+    else:
+        print(f"Model checkpoint for VDM at epoch {vdm_epoch} already exists")
+        print('Skip VDM training ...')
     print('Training completed!')
 
 if __name__ == "__main__":
-    # main()
-    from omegaconf import OmegaConf
-    # cfg = OmegaConf.load('/scratch/imaging/projects/bingliang/tsinv/VDMPS/configs/training/mri.yaml')
-    cfg = OmegaConf.load('/scratch/imaging/projects/bingliang/tsinv/VDMPS/configs/training/blackhole.yaml')
-    train_vdm(cfg)
+    main(cfg)

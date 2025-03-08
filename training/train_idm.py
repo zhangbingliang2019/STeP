@@ -18,25 +18,6 @@ from omegaconf import DictConfig
 from diffusers.models.attention_processor import AttnProcessor2_0
 
 
-
-def get_loss_weight(timesteps, num_train_timesteps, weight_type='cosine'):
-    # Normalize timesteps to range [0, 1]
-    t_normalized = timesteps / num_train_timesteps
-    
-    if weight_type == 'cosine':
-        # Cosine weighting as suggested by Nichol & Dhariwal (2021)
-        weights = torch.cos(t_normalized * torch.pi / 2) ** 2
-    elif weight_type == 'sqrt':
-        # Square root weighting
-        weights = torch.sqrt(1 - t_normalized ** 2)
-    else:
-        # Default to no weighting
-        weights = torch.ones_like(timesteps, dtype=torch.float32, device=timesteps.device)
-    
-    return weights
-
-
-
 def train_idm(cfg):
     dataset_cfg = cfg.dataset.image
     diffusion_cfg = cfg.diffusion
@@ -51,8 +32,6 @@ def train_idm(cfg):
 
     accelerator = Accelerator()
     dtype = torch.float32
-    # accelerator = Accelerator(mixed_precision='bf16')
-    # dtype = torch.bfloat16
     device = accelerator.device
     if accelerator.is_main_process and wandb_cfg.is_wandb:
         wandb.init(project=wandb_cfg.project, name=wandb_cfg.name)
@@ -117,13 +96,11 @@ def train_idm(cfg):
                 latents = latents.view(batch_size, frame_size, latent_channels, latent_size, latent_size)
             noise = torch.randn_like(latents)
             timesteps = torch.randint(0, noise_scheduler.config.num_train_timesteps, (latents.shape[0],), device=device, dtype=torch.int64)
-            weights = get_loss_weight(timesteps, noise_scheduler.config.num_train_timesteps, weight_type='none')
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
             image_only_indicator = torch.ones(noisy_latents.shape[0:2], dtype=torch.bool, device=noisy_latents.device)
 
             noise_pred = idm(noisy_latents, timesteps, image_only_indicator=image_only_indicator).sample
-            loss = nn.functional.mse_loss(noise_pred, noise, reduction='none').flatten(1).mean(-1)
-            loss = (loss * weights).mean()
+            loss = nn.functional.mse_loss(noise_pred, noise, reduction='none').flatten(1).mean()
 
             optimizer.zero_grad()
             accelerator.backward(loss)
@@ -139,28 +116,7 @@ def train_idm(cfg):
                 wandb.log({"loss": loss.item()})
 
         # Visualization and Checkpointing
-        if accelerator.is_main_process and (epoch + 1) % training_cfg.log_interval == 0:
-            sampling_model = SpatialTemporalDiffusionModel(
-                accelerator.unwrap_model(idm), vae, noise_scheduler,
-                video_shape=(frame_size, image_channels, image_size, image_size), latent_shape=(frame_size, latent_channels, latent_size, latent_size)
-            )
-            sampling_scheduler = EDMScheduler(100)
-            sampler = DiffusionPFODE(sampling_model, sampling_scheduler, 'euler')
-
-            with torch.no_grad():
-                zT = sampler.get_start(torch.zeros(1, *sampling_model.get_latent_shape()).cuda())
-                latents = sampler.sample(zT)
-                uncond_samples = sampling_model.decode(latents)[0]
-
-                # visualize_grid_bh(uncond_samples, target=str(image_dir / "{:04d}.png".format(epoch)), path=safe_dir(str(image_dir / 'tmp')), nrow=8)
-                # save_video_bh(uncond_samples, target=str(image_dir / "{:04d}.mp4".format(epoch)), path=safe_dir(str(image_dir / 'tmp')))
-                # save_video_bh_gif(uncond_samples, target=str(image_dir / "{:04d}.gif".format(epoch)), path=safe_dir(str(image_dir / 'tmp')))
-
-                visualize_grid_mri(uncond_samples, target=str(image_dir / "{:04d}.png".format(epoch)), nrow=6, image_type=cfg.dataset.image.image_type)
-                # save_grid_mri(uncond_samples, target=str(image_dir / "{:04d}_grid.png".format(epoch)), nrow=8)
-          
-   
-            if (epoch + 1) % training_cfg.save_interval == 0:
-                accelerator.save(accelerator.unwrap_model(idm), model_dir / f"idm_{epoch:04d}.pth")
-                accelerator.save(ema_idm.module, model_dir / f"ema_idm_{epoch:04d}.pth")
-                accelerator.save(noise_scheduler, model_dir / f"scheduler.pth")
+        if accelerator.is_main_process and (epoch + 1) % training_cfg.save_interval == 0:
+            accelerator.save(accelerator.unwrap_model(idm), model_dir / f"idm_{epoch:04d}.pth")
+            accelerator.save(ema_idm.module, model_dir / f"ema_idm_{epoch:04d}.pth")
+            accelerator.save(noise_scheduler, model_dir / f"scheduler.pth")

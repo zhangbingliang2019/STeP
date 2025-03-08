@@ -52,24 +52,3 @@ class BlackholeEvaluator:
         metrics = torch.max(results['cphase'], results['logcamp'])
         return {self.main_eval_fn_name: metrics}
     
-
-@register_evaluator('natural_video')
-class NaturalVideoEvaluator:
-    def __init__(self, op):
-        self.main_eval_fn_name = 'psnr'
-        self.op = op
-        self.psnr_fn = lambda x, y: psnr(x, y, data_range=1.0)
-        self.ssim_fn = lambda x, y: ssim(x, y, data_range=1.0)
-        self.lpips_fn = LPIPS(replace_pooling=True).cuda()
-
-    def norm01(self, x):
-        return (x * 0.5 + 0.5).clip(0, 1)
-
-    def __call__(self, x, y, xhat):
-        metrics = {}
-        source = self.norm01(x).flatten(0, 1)
-        recon = self.norm01(xhat).flatten(0, 1)
-        metrics['psnr'] = self.psnr_fn(source, recon)
-        metrics['ssim'] = self.ssim_fn(source, recon)
-        metrics['lpips'] = self.lpips_fn(source, recon)
-        return metrics

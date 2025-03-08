@@ -61,87 +61,6 @@ class DiffusionData(ABC, Dataset):
         print('+------------------------------------+')
 
 
-@register_dataset('synthetic')
-class SyntheticDataset(DiffusionData):
-    """
-        A concrete class for handling image datasets, inherits from DiffusionData.
-
-        This class is responsible for loading images from a specified directory,
-        applying transformations to center crop the squared images of given resolution.
-
-        Supported extension : ['*.jpg', '*.JPG', '*.jpeg', '*.JPEG', '*.png', '*.PNG']
-        Output data range   : [-1, 1]
-    """
-
-    def __init__(self, root='dataset/demo', resolution=256, device='cuda', start_id=None, end_id=None):
-        # Define the file extensions to search for
-        extensions = ['*.jpg', '*.JPG', '*.jpeg', '*.JPEG', '*.png', '*.PNG']
-        self.data = [file for ext in extensions for file in Path(root).rglob(ext)]
-        self.data = sorted(self.data)
-
-        # Subset the dataset
-        self.data = self.data[start_id: end_id]
-        self.trans = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Resize(resolution),
-            transforms.CenterCrop(resolution)
-        ])
-        self.res = resolution
-        self.device = device
-
-    def __getitem__(self, i):
-        img = (self.trans(Image.open(self.data[i])) * 2 - 1).to(self.device)
-        if img.shape[0] == 1:
-            img = torch.cat([img] * 3, dim=0)
-        return img
-
-    def get_shape(self):
-        return 3, self.res, self.res
-
-    def __len__(self):
-        return len(self.data)
-
-
-@register_dataset('image')
-class ImageDataset(DiffusionData):
-    """
-        A concrete class for handling image datasets, inherits from DiffusionData.
-
-        This class is responsible for loading images from a specified directory,
-        applying transformations to center crop the squared images of given resolution.
-
-        Supported extension : ['*.jpg', '*.JPG', '*.jpeg', '*.JPEG', '*.png', '*.PNG']
-        Output data range   : [-1, 1]
-    """
-
-    def __init__(self, root='dataset/demo', resolution=256, device='cuda', start_id=None, end_id=None):
-        # Define the file extensions to search for
-        extensions = ['*.jpg', '*.JPG', '*.jpeg', '*.JPEG', '*.png', '*.PNG']
-        self.data = [file for ext in extensions for file in Path(root).rglob(ext)]
-        self.data = sorted(self.data)
-
-        # Subset the dataset
-        self.data = self.data[start_id: end_id]
-        self.trans = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Resize(resolution),
-            transforms.CenterCrop(resolution)
-        ])
-        self.res = resolution
-        self.device = device
-
-    def __getitem__(self, i):
-        img = (self.trans(Image.open(self.data[i])) * 2 - 1).to(self.device)
-        if img.shape[0] == 1:
-            img = torch.cat([img] * 3, dim=0)
-        return img
-
-    def get_shape(self):
-        return 3, self.res, self.res
-
-    def __len__(self):
-        return len(self.data)
-
 
 @register_dataset('mri_image')
 class MRIImage(DiffusionData):
@@ -156,32 +75,7 @@ class MRIImage(DiffusionData):
         self.clip = clip
         self.scaling = scaling
         self.image_type = image_type # 'real+imag', 'amplitude+phase', 'amplitude'
-        # self.zoom_in_out = zoom_in_out
-        # self.zoom_range = zoom_range
-
-    # def get_zoom_in_out(self, img):
-    #     if self.zoom_in_out:
-    #         scale = np.random.uniform(self.zoom_range[0], self.zoom_range[1])
-    #         zoom_shape = [
-    #             int(self.resolution * scale),
-    #             int(self.resolution * scale)
-    #         ]
-    #         img = TF.resize(img, zoom_shape, antialias=False, interpolation=TF.InterpolationMode.BICUBIC)
-    #         if zoom_shape[0] > self.resolution:
-    #             # print('center crop')
-    #             img = TF.center_crop(img, self.resolution)
-    #         elif zoom_shape[0] < self.resolution:
-    #             # print('padding')
-    #             diff = self.resolution - zoom_shape[0]
-    #             img = TF.pad(
-    #                 img,
-    #                 (diff // 2 + diff % 2, diff // 2 + diff % 2, diff // 2, diff // 2)
-    #             )
-    #     else:
-    #         img = TF.resize(img, (self.resolution, self.resolution), antialias=False)
-    #     return img
-
-
+       
     def __getitem__(self, idx):
         image = torch.from_numpy(np.load(str(self.pathlist[idx])))
         # image = self.get_zoom_in_out(image)
@@ -233,31 +127,6 @@ class MRIVideo(DiffusionData):
         self.clip = clip
         self.scaling = scaling
         self.image_type = image_type # 'real+imag', 'amplitude+phase', 'amplitude'
-        # self.zoom_in_out = zoom_in_out
-        # self.zoom_range = zoom_range
-
-    # def get_zoom_in_out(self, img):
-    #     if self.zoom_in_out:
-    #         scale = np.random.uniform(self.zoom_range[0], self.zoom_range[1])
-    #         zoom_shape = [
-    #             int(self.resolution * scale),
-    #             int(self.resolution * scale)
-    #         ]
-    #         img = TF.resize(img, zoom_shape, antialias=False, interpolation=TF.InterpolationMode.BICUBIC)
-    #         if zoom_shape[0] > self.resolution:
-    #             # print('center crop')
-    #             img = TF.center_crop(img, self.resolution)
-    #         elif zoom_shape[0] < self.resolution:
-    #             # print('padding')
-    #             diff = self.resolution - zoom_shape[0]
-    #             img = TF.pad(
-    #                 img,
-    #                 (diff // 2 + diff % 2, diff // 2 + diff % 2, diff // 2, diff // 2)
-    #             )
-    #     else:
-    #         img = TF.resize(img, (self.resolution, self.resolution), antialias=False)
-    #     return img
-
 
     def __getitem__(self, idx):
         npy_list = [self.pathlist[idx]/'timeidx={}.npy'.format(i) for i in range(self.frames)]
@@ -298,7 +167,7 @@ class MRIVideo(DiffusionData):
 
 @register_dataset('blackhole_image')
 class BlackHoleImage(DiffusionData):
-    def __init__(self, root='/scratch/imaging/projects/bingliang/tsinv/VDMPS/dataset/blackhole_image_50k', resolution=256, original_resolution=400,
+    def __init__(self, root='data/blackhole_image', resolution=256, original_resolution=400,
                  random_flip=True, zoom_in_out=True, zoom_range=[0.75, 1.25], length=50000):  # [0.833, 1.145]
         super().__init__()
         self.root = root
@@ -353,7 +222,7 @@ class BlackHoleImage(DiffusionData):
 
 @register_dataset('blackhole_video')
 class BlackHoleVideo(DiffusionData):
-    def __init__(self, root='/scratch/imaging/projects/bingliang/tsinv/VDMPS/dataset/blackhole_video', resolution=256, original_resolution=400,
+    def __init__(self, root='data/blackhole_video', resolution=256, original_resolution=400,
                  frames=64, random_flip=True, zoom_in_out=True, zoom_range=[0.75, 1.25], permute=False, total_frames=1000, length=1000):  # [0.833, 1.145]
         super().__init__()
         self.root = root
@@ -421,57 +290,4 @@ class BlackHoleVideo(DiffusionData):
     def get_shape(self):
         return self.frames, 1, self.resolution, self.resolution
 
-
-@register_dataset('davis')
-class DAVIS(DiffusionData):
-    def __init__(self, root='/scratch/imaging/projects/bingliang/tsinv/DAVIS/DAVIS', split='train', resolution=256, frames=16):
-        super().__init__()
-        self.root = root
-        self.split = split
-        self.resolution = resolution
-        self.frames = frames
-        self.category = []
-        # load split file
-        if split == 'train' or split == 'all':
-            train_split_file = os.path.join(root, 'ImageSets/2017', 'train.txt')
-            with open(train_split_file, 'r') as f:
-                self.category += f.read().splitlines()
-        if split == 'val' or split == 'all':
-            val_split_file = os.path.join(root, 'ImageSets/2017', 'val.txt')
-            with open(val_split_file, 'r') as f:
-                self.category += f.read().splitlines()
-        # number of frames in each folder
-        self.num_frames = []
-        for folder in self.category:
-            image_paths = sorted(glob.glob(os.path.join(self.root, 'JPEGImages/Full-Resolution', folder, '*.jpg')))
-            self.num_frames.append(len(image_paths))
-        # get {idx: (category, start frame)} maping by chunking the dataset
-        self.data = []
-        for (category, num_frame) in zip(self.category, self.num_frames):
-            for start in range(0, num_frame - frames, frames): # drop the last frames
-                self.data.append((category, start))
         
-        self.transform = transforms.Compose([
-            transforms.Resize(resolution),
-            transforms.CenterCrop(resolution),
-            transforms.ToTensor(),
-            transforms.Lambda(lambda x: x*2 - 1)
-        ])
-    
-    def __len__(self):
-        return len(self.data)
-    
-    def __getitem__(self, idx):
-        folder, start = self.data[idx]
-        images = []
-        image_paths = sorted(glob.glob(os.path.join(self.root, 'JPEGImages/Full-Resolution', folder, '*.jpg')))
-        image_paths = image_paths[start:start+self.frames]
-        for image_path in image_paths:
-            image = Image.open(image_path).convert('RGB')
-            image = self.transform(image)
-            images.append(image)
-        images = torch.stack(images, dim=0)
-        return images
-
-    def get_shape(self):
-        return self.frames, 3, self.resolution, self.resolution

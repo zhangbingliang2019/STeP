@@ -133,7 +133,7 @@ class BlackHoleImagingTorch(Operator):
         This class utilize a array file for observation setup (e.g. telescope u,v map)
     """
 
-    def __init__(self, array="/scratch/imaging/projects/bingliang/arrays/EHT2017.txt", imsize=256, w_vis=0, w_amp=0,
+    def __init__(self, array="configs/task/EHT2017.txt", imsize=256, w_vis=0, w_amp=0,
                  w_cphase=1, w_logcamp=1, w_flux=0.5, loss_normalize=True, num_frames=64, ref_multiplier=1.0, device='cuda'):
         super().__init__(0)
         assert num_frames == 64, "num_frames should be 64"
@@ -707,61 +707,7 @@ class BlackHoleImagingTorch(Operator):
         camp_loss = torch.abs((camp_pred - y_camp) / y_logcamp_sigma) ** 2
         return cp_loss, camp_loss
 
-    # 9. (TBD) evaluating blury PSNR
-    @staticmethod
-    def aligned_images(image1, image2, search_range=(-0.5, 0.5), steps=30):
-        # shift search grid
-        batch_size, shape = image1.shape[0], image1.shape[1:]
-        tx_values = torch.linspace(search_range[0], search_range[1], steps)
-        ty_values = torch.linspace(search_range[0], search_range[1], steps)
-        tx, ty = torch.meshgrid(tx_values, ty_values)
-        tx, ty = tx.flatten(), ty.flatten()
-
-        first_row = torch.stack([torch.ones_like(tx), torch.zeros_like(tx), tx], dim=-1)
-        second_row = torch.stack([torch.zeros_like(ty), torch.ones_like(ty), ty], dim=-1)
-        theta = torch.stack([first_row, second_row], dim=1)
-        grid = F.affine_grid(theta, (tx.shape[0], *shape), align_corners=True)
-        grid = grid.unsqueeze(0).repeat(batch_size, 1, 1, 1, 1)
-
-        # shift image2
-        N, S = grid.shape[:2]
-        flatten_image1 = image1.unsqueeze(1).repeat(1, S, 1, 1, 1).flatten(0, 1).clip(0, 1)
-        flatten_image2 = image2.unsqueeze(1).repeat(1, S, 1, 1, 1).flatten(0, 1).clip(0, 1)
-        flatten_grid = grid.flatten(0, 1)
-        trans_image2 = F.grid_sample(flatten_image2.cpu(), flatten_grid.cpu(), align_corners=True).to(image1.device).clip(0, 1)
-        eval_psnr = psnr(flatten_image1, trans_image2, data_range=1.0, reduction='none')
-        argmax = eval_psnr.view(N, S).max(dim=1)[1]
-        aligned_image2 = trans_image2.view(N, S, *image2.shape[1:])[torch.arange(N), argmax]
-        return aligned_image2
-
-    def blur_images(self, samples, factor=15):
-        eht_images = self.pt2ehtim_batch(samples, 64, self.ref_im)
-        blur_samples = []
-        for eht_image in eht_images:
-            blur_eht_image = eht_image.blur_circ(factor * eh.RADPERUAS)
-            pt_image = torch.from_numpy(blur_eht_image.ivec.reshape(1, 1, 64, 64).astype(np.float32))
-            blur_samples.append(pt_image)
-        blur_samples = torch.cat(blur_samples).to(samples.device)
-        return blur_samples
-
-    @staticmethod
-    def aligned_psnr(image1, aligned_image2):
-        return psnr(image1.clip(0, 1), aligned_image2.clip(0, 1), data_range=1.0, reduction='none')
-
-    def blur_aligned_psnr(self, image1, aligned_image2, factor=15):
-        blur_image1 = self.blur_images(image1, factor).clip(0, 1)
-        blur_aligned_image2 = self.blur_images(aligned_image2, factor).clip(0, 1)
-        return psnr(blur_image1, blur_aligned_image2, data_range=1.0, reduction='none')
-
-    # def evaluate_aligned_psnr(self, image1, image2, blur_factors=(0, 10, 15, 20)):
-    #     aligned_image2 = self.aligned_images(image1, image2)
-    #     eval_psnr = self.aligned_psnr(image1, aligned_image2)[:, None]
-    #     for f in blur_factors:
-    #         f_psnr = self.blur_aligned_psnr(image1, aligned_image2, factor=f)[:, None]
-    #         eval_psnr = torch.cat([eval_psnr, f_psnr], dim=1)
-    #     return eval_psnr
-
-    # 10. public interface
+    # 9. public interface
     def unnormalize(self, inputs):
         # [-1, 1] -> [0, 1]
         return inputs * 0.5 + 0.5

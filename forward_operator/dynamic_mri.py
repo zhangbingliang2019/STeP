@@ -3,30 +3,9 @@ import torch
 from torch.fft import fftn, fftshift
 import numpy as np
 
-@register_operator('mri-old')
-class DynamicMRIOld(Operator):
-    def __init__(self, acc_factor, sigma=0):
-        super().__init__(sigma)
-        self.mask = torch.zeros(1, 1, 1, 192, 1)
-        self.acc_factor = acc_factor
-        self.mask[:, :, :, ::acc_factor, :] = 1
-        # self.mask[:, :, :, 84:108, :] = 1 # 24 ACS lines
-        self.mask[:, :, :, 90:102, :] = 1 # 12 ACS lines
-
-    def __call__(self, x):
-        # [B, T, C, H, W] -> [B, T, 2, 192, 192]
-        x = x.double()
-        x = x[:, :, 0, ...] + 1j * x[:, :, 1, ...]
-        x = fftshift(x, dim=(-2, -1))
-        y = fftn(x, dim=(-2, -1))
-        y = torch.view_as_real(y).permute(0, 1, 4, 2, 3).contiguous()
-        # y = y.average(dim=1)
-        return self.mask.to(x.device) * y
-
-
 
 @register_operator('mri')
-class DynamicMRIOld(Operator):
+class DynamicMRI(Operator):
     def __init__(self, acc_factor, mode='same_mask', resolution=192, frames=12, num_acs_lines=12, sigma=0):
         super().__init__(sigma)
         self.acc_factor = acc_factor

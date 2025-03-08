@@ -24,9 +24,6 @@ def train_vae(cfg):
     vae_cfg = cfg.vae
     wandb_cfg = cfg.wandb
 
-
-    # accelerator = Accelerator(mixed_precision='bf16')
-    # dtype = torch.bfloat16
     accelerator = Accelerator()
     dtype = torch.float32
     device = accelerator.device
@@ -59,7 +56,6 @@ def train_vae(cfg):
 
     optimizer = torch.optim.Adam(vae.parameters(), lr=training_cfg.lr)
     criterion = nn.L1Loss()
-    # criterion = nn.MSELoss()
     vae, optimizer, dataloader = accelerator.prepare(vae, optimizer, dataloader)
 
     print('+=========================================+')
@@ -91,15 +87,6 @@ def train_vae(cfg):
                 wandb.log({"loss": loss.item(), "kl_loss": kl_loss.item()})
 
         # Visualization and Checkpointing
-        if accelerator.is_main_process and (epoch + 1) % training_cfg.log_interval == 0:
-            with torch.no_grad():
-                images = dataset.get_data(10).to(dtype).to(device)
-                latents = accelerator.unwrap_model(vae).encode(images).latent_dist.sample()
-                recon_images = accelerator.unwrap_model(vae).decode(latents).sample
-
-                full_grid = torch.cat([images, recon_images], dim=0).detach().cpu()
-                # visualize_grid_bh(full_grid, target=str(image_dir / f"{epoch:04d}.png"), path=safe_dir(str(image_dir / 'tmp')), nrow=10)
-                visualize_grid_mri(full_grid, target=str(image_dir / f"{epoch:04d}.png"), nrow=10, image_type=cfg.dataset.image.image_type)
-            if (epoch + 1) % training_cfg.save_interval == 0:
-                accelerator.save(accelerator.unwrap_model(vae), model_dir / f"vae_{epoch:04d}.pth")
-                accelerator.save(ema_vae.module, model_dir / f"ema_vae_{epoch:04d}.pth")
+        if accelerator.is_main_process and (epoch + 1) % training_cfg.save_interval == 0:
+            accelerator.save(accelerator.unwrap_model(vae), model_dir / f"vae_{epoch:04d}.pth")
+            accelerator.save(ema_vae.module, model_dir / f"ema_vae_{epoch:04d}.pth")
