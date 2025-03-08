@@ -498,5 +498,4 @@ class UNetSpatioTemporalDiffusion(UNetSpatioTemporalConditionModelCustom):
         encoder_hidden_states = torch.zeros(sample.size(0), 1, 1024, device=sample.device)
         added_time_ids = torch.zeros(sample.size(0), 1, device=sample.device)
         return super().forward(sample, timestep, encoder_hidden_states, added_time_ids, image_only_indicator=image_only_indicator)
-
-        ++++++++++++++++++++++
+        

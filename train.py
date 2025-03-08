@@ -1,9 +1,6 @@
 from training.train_vae import train_vae
 from training.train_idm import train_idm
 from training.train_vdm import train_vdm
-from training.train_pidm import train_pidm
-from training.train_pvdm import train_pvdm
-from training.debug import train_vae as train_debug
 from pathlib import Path
 import hydra
 import os
@@ -36,4 +33,4 @@ def main(cfg):
     print('Training completed!')
 
 if __name__ == "__main__":
-    main(cfg)
+    main()
