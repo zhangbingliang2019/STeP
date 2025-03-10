@@ -54,3 +54,13 @@ python sample.py +task=mri gpu=0 task.target_dir=dynamic_mri num_samples=1
 ```
 
 It will generate `num_samples` in `task.target_dir`.
+
+
+
+
+
+
+
+个人陈述：
+
+1. 整体结构问题不大，
