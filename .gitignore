@@ -118,7 +118,6 @@ db/*.sqlite
 *.wav
 *.flac
 *.ogg
-!step.png
 
 ### Archives and compressed files ###
 *.zip
@@ -167,3 +166,7 @@ docker-compose.override.yml
 /private/
 /tmp/
 /.cache/
+
+!step.png
+!assets/*.png
+!assets/*.mp4
