@@ -118,6 +118,7 @@ db/*.sqlite
 *.wav
 *.flac
 *.ogg
+!step.png
 
 ### Archives and compressed files ###
 *.zip
