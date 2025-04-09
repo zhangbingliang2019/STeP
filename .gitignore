@@ -169,4 +169,3 @@ docker-compose.override.yml
 
 !step.png
 !assets/*.png
-!assets/*.mp4
