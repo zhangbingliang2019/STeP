@@ -1,0 +1,115 @@
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>STeP: A General and Scalable Framework for Solving Video Inverse Problems with Spatiotemporal Diffusion Priors</title>
+        <link rel="icon" href="/step.png">
+        <link rel="stylesheet" href="/fonts/avenir-next/stylesheet.css">
+        <link rel="stylesheet" href="/fonts/segoe-print/stylesheet.css">
+        <link rel="stylesheet" href="/icons/style.css">
+        <link rel="stylesheet" href="/css/window.css">
+        <link rel="stylesheet" href="/css/carousel.css">
+        <link rel="stylesheet" href="/css/selection_panel.css">
+        <link rel="stylesheet" href="/css/main.css">
+        <script src="/js/window.js"></script>
+        <script src="/js/carousel.js"></script>
+        <script src="/js/results.js"></script>
+		<script src="/js/main.js"></script>
+    </head>
+    <body>
+        <div id="main">
+            <div id="title" class="x-gradient-font">
+                <span style="font-size: 43px;"><span style="font-variant: small-caps;">STeP</span>: A General and Scalable Framework</span><br>
+                <span style="font-size: 43px;">for Solving Video Inverse Problems</span><br>
+                <span style="font-size: 43px;">with Spatiotemporal Diffusion Priors</span>
+            </div>
+            <div id="authors">
+                <div><a class="link" href="https://zhangbingliang2019.github.io/">Bingliang Zhang</a><sup>*,1</sup></div>
+                <div><a class="link" href="https://zihuiwu.github.io/">Zihui Wu</a><sup>*,1</sup></div>
+                <div><a class="link" href="https://www.berthyfeng.com/">Berthy T. Feng</a><sup>1</sup></div>
+                <div><a class="link" href="https://yang-song.net/">Yang Song</a><sup>2</sup></div>
+                <div><a class="link" href="http://www.yisongyue.com/">Yisong Yue</a><sup>1</sup></div>
+                <div><a class="link" href="http://users.cms.caltech.edu/~klbouman/">Katherine L. Bouman</a><sup>1</sup></div>
+            </div>
+            <div id="institution">
+                <div><sup>1</sup><a class="link" href="https://cms.caltech.edu/">California Institute of Technology</a></div>
+                <div><sup>2</sup><a class="link" href="https://openai.com/">OpenAI</a></div>
+                <div><sup>*</sup >Equal contribution</div>
+            </div>
+            <div class="x-center-text" style="font-size: 20px; font-weight: 700; color: #5f5f5f;">
+                in submission
+            </div>
+            <div id="links">
+                <div><a id="paper" href="">Paper</a></div>
+                <div><a id="arxiv" href="">Arxiv</a></div>
+                <div><a id="code" href="">Code</a></div>
+            </div>
+            <div id="teaser">
+                <div style="width: 100%;"><img src="assets/teaser.png" style="width: 100%;"></div>
+            </div>
+            <div class="x-center-text" style="font-size: 20px; font-weight: 500; color: #3f3f3f;">
+                <b>TL;DR:</b> A general and scalable framework for solving <i><b>video inverse problems</b></i> based on <i><b>spatiotemporal diffusion priors</b></i>,
+                    enabling efficient and high-quality video reconstruction.
+            </div>
+            <div id="abstract" class="x-gradient-block">
+                We study the problem of general Bayesian inverse problems of videos using diffusion model priors.
+                While it is desirable to use a video diffusion prior to effectively capture complex temporal relationships, 
+                due to the computational and data requirements of training such a model, 
+                prior work has instead relied on image diffusion priors on single frames combined with heuristics to enforce temporal consistency.
+                However, these approaches struggle with faithfully recovering the underlying temporal relationships, particularly for tasks with high temporal uncertainty. 
+                In this paper, we demonstrate the feasibility of practical and accessible spatiotemporal diffusion priors by fine-tuning latent video diffusion models from pretrained image diffusion models using limited videos in specific domains. 
+                Leveraging this plug-and-play spatiotemporal diffusion prior, we introduce a general and scalable framework for solving video inverse problems. 
+                We then apply our framework to two challenging scientific video inverse problems—black hole imaging and dynamic MRI. Our framework enables the generation of diverse, 
+                high-fidelity video reconstructions that not only fit observations but also recover multi-modal solutions. 
+                By incorporating a spatiotemporal diffusion prior, we significantly improve our ability to capture complex temporal relationships in the data while also enhancing spatial fidelity.
+            </div>
+
+            <div class="x-section-title"><div class="x-gradient-font">Results <span style="font-size: 40px; font-weight:600;">|</span> Black Hole Video Reconstruction</div></div>
+            <p>We consider an astronomical imaging problem where we recover videos of the rapidly evolving Sagittarius A* black hole from highly sparse interferometric measurements.</p>
+            <div id="results-bhvr"></div>
+
+            <div class="x-section-title"><div class="x-gradient-font">Results <span style="font-size: 40px; font-weight:600;">|</span> Dynamic Magnetic Resonance Imaging</div></div>
+            <p>We also investigate a dynamic magnetic resonance imaging (MRI) problem in cardiology. The reconstructions are given by accelerated sequences that only take 27% of runtime of the original sequences.</p>
+            <div id="results-dmri"></div>
+
+            <div class="x-section-title"><div class="x-gradient-font">Methodology</div></div>
+            <p>
+                <img src="assets/diagram.png" style="width: 100%;">
+            </p>
+            <p>
+                Prior works for solving video inverse problems typically rely on image diffusion priors combined with heuristics to enforce temporal consistency.
+                This is due to the common belief that training a video diffusion model is computationally prohibitive and requires a large amount of video data, which is usually unavailable for scientific problems.
+                Therefore, they opt for using image diffusion priors on single frames and enforce temporal consistency by techniques such as equivariant self-guidance and batch-consistent sampling.
+                These heuristics either rely on extracting optical flow from the measurements or assume a static temporal relationship between the frames.
+                We find that these approaches are limited to image restoration tasks and struggle with faithfully recovering the underlying temporal relationships, particularly for tasks with high temporal uncertainty.
+            </p>
+            <p>
+                In this work, we propose a general and scalable framework for solving video inverse problems called <span style="font-variant: small-caps;">STeP</span>.
+                We first show that it is feasible to train a spatiotemporal diffusion prior by fine-tuning latent video diffusion models from pretrained image diffusion models using limited videos in specific domains.
+                This allows us to leverage the power of video diffusion models without the need for extensive computational resources or large datasets.
+                By combining the prior with the physical knowledge of the inverse problem in a plug-and-play video inverse problem solver, we can effectively solve video inverse problems in a scalable and data-efficient manner.
+                Our framework is designed to be general and scalable, making it applicable to a wide range of video inverse problems.
+                We demonstrate the effectiveness of our approach by applying it to two challenging scientific video inverse problems: black hole video reconstruction and dynamic MRI.
+                Our results show that our framework enables the generation of diverse, high-fidelity video reconstructions that not only fit observations but also recover multi-modal solutions.
+            </p>
+
+            <div class="x-section-title"><div class="x-gradient-font">Citation</div></div>
+            <p>
+                If you find our work interesting, please consider citing our paper:
+            </p>
+            <p class="bibtex x-gradient-block">
+@article{zhang2025structured,
+    title   = {STeP: A General and Scalable Framework for Solving Video Inverse Problems with Spatiotemporal Diffusion Priors},
+    author  = {Zhang, Bingliang and Wu, Zihui and Feng, Berthy T. and Yue, Yisong and Bouman, Katherine L.},
+    journal = {arXiv preprint arXiv:xxxx.xxxxx},
+    year    = {2025}
+}
+            </p>
+        </div>
+        <div id="bottombar">
+            <div><span style="font-variant: small-caps;">STeP</span>: A General and Scalable Framework for Solving Video Inverse Problems with Spatiotemporal Diffusion Priors</div>
+            <div>Template adopted from <a class="link" href="https://trellis3d.github.io/">Trellis</a> designed by <span>Jianfeng Xiang</span>.</div>
+        </div>
+    </body>
+</html>
