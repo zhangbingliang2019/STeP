@@ -78,13 +78,6 @@ It will generate `num_samples` in `task.target_dir`.
 
 ### 4. Training Video Diffusion Model Prior
 
-Training dataset:
-
-| Dataset     | Status  |
-| ----------- | ------- |
-| blackhole   | private |
-| dynamic-MRI | TBD     |
-
 Training configs are in folder `configs/training`.
 
 * prepare the required image and video dataset. 
