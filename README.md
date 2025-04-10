@@ -56,8 +56,8 @@ python sample.py +task=[task-name] gpu=[gpu] task.target_dir=[save_dir]
 example commands:
 
 ```
-python sample.py +task=blackhole gpu=0 task.target_dir=blackhole_imaging num_samples=10
-python sample.py +task=mri gpu=0 task.target_dir=dynamic_mri num_samples=1
+python sample.py +task=blackhole gpu=0 task.target_dir=exps/blackhole_imaging num_samples=10
+python sample.py +task=mri gpu=0 task.target_dir=exps/dynamic_mri num_samples=1
 ```
 
 It will generate `num_samples` in `task.target_dir`.
