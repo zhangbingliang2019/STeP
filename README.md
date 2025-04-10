@@ -12,10 +12,10 @@
 conda create -n STeP python=3.8
 conda activate STeP
 
-pip install -r requirements.txt
-
-# (optional) install PyTorch with proper CUDA
 conda install pytorch==2.3.0 torchvision==0.18.0 pytorch-cuda=12.1 -c pytorch -c nvidia
+conda install -c conda-forge pynfft
+
+pip install -r requirements.txt
 ```
 
 
