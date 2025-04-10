@@ -1,17 +1,19 @@
-test_idx: [3, 12, 20, 36, 38, 39, 46, 53, 54, 55, 57, 58, 62, 67, 71, 72, 75, 77, 96, 99]
+test_idx: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 
 diffusion_wrapper:
   name: st_diffusion
-  vdm_or_path: # [IMPORTANT] modify the path to the vdm model
-  vae_or_path: # [IMPORTANT] modify the path to the vae model
-  scheduler_or_path: # [IMPORTANT] modify the path to the scheduler model
+  # [IMPORTANT] modify the path to the diffusion model. Set to "null" to use our pre-trained model at https://huggingface.co/bingliangzhang00/STeP-mri
+  vdm_or_path: null
+  vae_or_path: null 
+  scheduler_or_path: null
+  # ++++++++++++++++++++
   video_shape: [12, 2, 192, 192]
   latent_shape: [12, 2, 48, 48]
 
 dataset:
   name: mri_video
-  root: dataset/mri
+  root: dataset/mri_test
   resolution: 192           # resolution of the images
   frames: 12
   random_flip: false

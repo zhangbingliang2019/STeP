@@ -1,5 +1,24 @@
 ## Get Started
 
+### 1. Prepare the Environment
+
+- python 3.8
+- PyTorch 2.3
+- CUDA 12.1
+
+```
+# in DAPS folder
+conda create -n STeP python=3.8
+conda activate STeP
+
+pip install -r requirements.txt
+
+# (optional) install PyTorch with proper CUDA
+conda install pytorch==2.3.0 torchvision==0.18.0 pytorch-cuda=12.1 -c pytorch -c nvidia
+```
+
+
+
 #### 1. Training Video Diffusion Model Prior
 
 Training configs are in folder `configs/training`.

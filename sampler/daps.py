@@ -4,7 +4,6 @@ import numpy as np
 import torch.nn as nn
 from cores.scheduler import get_diffusion_scheduler, DiffusionPFODE
 from forward_operator.latent_wrapper import LatentWrapper
-from cores.mcmc import MCMCSampler
 from .base import register_sampler
 
 

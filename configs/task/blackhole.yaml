@@ -1,11 +1,13 @@
-test_idx: [3, 12, 20, 36, 38, 39, 46, 53, 54, 55, 57, 58, 62, 67, 71, 72, 75, 77, 96, 99]
+test_idx: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 
 diffusion_wrapper:
   name: st_diffusion
-  vdm_or_path: # [IMPORTANT] modify the path to the vdm model
-  vae_or_path: # [IMPORTANT] modify the path to the vae model
-  scheduler_or_path: # [IMPORTANT] modify the path to the scheduler model
+  # [IMPORTANT] modify the path to the diffusion model. Set to "null" to use our pre-trained model at https://huggingface.co/bingliangzhang00/STeP-blackhole
+  vdm_or_path: null
+  vae_or_path: null
+  scheduler_or_path: null
+  # ++++++++++++++++++++
   video_shape: [64, 1, 256, 256]
   latent_shape: [64, 1, 32, 32]
 
@@ -24,15 +26,15 @@ forward_operator:
 
 dataset:
   name: blackhole_video
-  root: dataset/blackhole_video
+  root: dataset/blackhole_video_test
   resolution: 256         # resolution of the images
-  original_resolution: 400
+  original_resolution: 256
   frames: 64              # number of frames in each video
   random_flip: false
   zoom_in_out: false
   zoom_range: [0.75, 1.25]
   permute: false          # [B, T ,C, H, W] -> [B, C, T, H, W]
-  total_frames: 1000
+  total_frames: 64
   length: 1000
 
 sampler:

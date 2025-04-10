@@ -112,6 +112,9 @@ class SpatialTemporalDiffusionModel(LatentDiffusionModel):
     def get_latent_shape(self):
         return self.latent_shape
     
+    def get_in_shape(self):
+        return self.get_latent_shape()
+    
     def encode(self, x0):
         # x0: (batch_size, frame_size, C, H, W)
         source_dtype = x0.dtype

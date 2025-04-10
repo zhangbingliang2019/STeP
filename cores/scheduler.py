@@ -1,6 +1,6 @@
 from torch.autograd import grad
 from abc import ABC, abstractmethod
-from torchdiffeq import odeint
+from torchdiffeq import odeint, odeint_adjoint
 import numpy as np
 import tqdm
 import torch
@@ -29,30 +29,19 @@ def get_diffusion_scheduler(name: str, **kwargs):
 
 class Scheduler(ABC):
     """
-        Abstract base class for implementing various scheduling algorithms. Schedulers are
-        used to manage the time, sigma, scaling and coefficient of diffusion SDE/ODE.
+    Abstract base class for diffusion scheduler.
+
+    Schedulers manage time steps, noise scales (sigma), scaling factors, and coefficients 
+    used in diffusion stochastic/ordinary differential equations (SDEs/ODEs).
     """
 
-    def __init__(self, num_steps, verbose=False):
-        self.num_steps = num_steps
-        self.verbose = verbose
+    def __init__(self, num_steps):
+        self.num_steps = num_steps + 1 # include the initial step
 
     def discretize(self, time_steps):
         sigma_steps = self.get_sigma(time_steps[:-1])
         sigma_steps = torch.cat([sigma_steps, torch.zeros_like(sigma_steps[:1])])
         self.sigma_steps = sigma_steps
-        # scaling_steps = self.get_scaling(time_steps[:-1])
-        # sigma_derivative_steps = self.get_sigma_derivative(time_steps[:-1])
-        # scaling_derivative_steps = self.get_scaling_derivative(time_steps[:-1])
-
-        # scaling_factor = 1 - \dot s(t)/s(t) * \Delta t
-        # scaling_factor_steps = 1 - scaling_derivative_steps / scaling_steps * (time_steps[:-1] - time_steps[1:])
-        # factor = 2 s(t)^2 \dot\sigma(t)\sigma(t)\Delta t
-        # factor_steps = 2 * scaling_steps ** 2 * sigma_steps * sigma_derivative_steps * (
-        #         time_steps[:-1] - time_steps[1:])
-
-        # self.time_steps, self.scaling_steps, self.sigma_steps, self.scaling_factor_steps, self.factor_steps = time_steps, scaling_steps, sigma_steps, scaling_factor_steps, factor_steps
-        
 
     def tensorize(self, data):
         if isinstance(data, (int, float)):
@@ -137,17 +126,10 @@ class Scheduler(ABC):
 
 @register_diffusion_scheduler('vp')
 class VPScheduler(Scheduler):
-    """
-        Variance Preserving Scheduler for managing the time, sigma and coefficient of diffusion SDE/ODE.
+    """Variance Preserving Scheduler."""
 
-        Example Usage:
-            scheduler = VPScheduler(num_steps=100, beta_max=20, beta_min=0.1, beta_type='linear', verbose=True)
-            for pbar, time, scaling, sigma, factor, scaling_factor in scheduler:
-                print(f"Time: {time}, Scaling: {scaling}, Sigma: {sigma}, Factor: {factor}, Scaling Factor: {scaling_factor}")
-    """
-
-    def __init__(self, num_steps, beta_max=20, beta_min=0.1, epsilon=1e-5, beta_type='linear', verbose=True):
-        super().__init__(num_steps, verbose)
+    def __init__(self, num_steps, beta_max=20, beta_min=0.1, epsilon=1e-5, beta_type='linear'):
+        super().__init__(num_steps)
         self.beta_min = beta_min
         self.beta_max = beta_max
         self.beta_type = beta_type
@@ -163,7 +145,7 @@ class VPScheduler(Scheduler):
         self.a = beta_max ** (1 / self.n) - beta_min ** (1 / self.n)
         self.b = beta_min ** (1 / self.n)
 
-        time_steps = self.get_discrete_time_steps(num_steps)
+        time_steps = self.get_discrete_time_steps(self.num_steps)
         self.discretize(time_steps)
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -229,22 +211,15 @@ class VPScheduler(Scheduler):
 
 @register_diffusion_scheduler('ve')
 class VEScheduler(Scheduler):
-    """
-        Variance Exploding Scheduler for managing the time, sigma and coefficient of diffusion SDE/ODE.
+    """Variance Exploding Scheduler."""
 
-        Example Usage:
-            scheduler = VEScheduler(num_steps=100, sigma_max=100, sigma_min=0.01, verbose=True)
-            for pbar, time, scaling, sigma, factor, scaling_factor in scheduler:
-                print(f"Time: {time}, Scaling: {scaling}, Sigma: {sigma}, Factor: {factor}, Scaling Factor: {scaling_factor}")
-    """
-
-    def __init__(self, num_steps, sigma_max=100, sigma_min=1e-2, verbose=False):
-        super().__init__(num_steps, verbose)
+    def __init__(self, num_steps, sigma_max=100, sigma_min=1e-2):
+        super().__init__(num_steps)
         self.sigma_min = sigma_min
         self.sigma_max = sigma_max
 
         # get time_steps
-        time_steps = self.get_discrete_time_steps(num_steps)
+        time_steps = self.get_discrete_time_steps(self.num_steps)
         self.discretize(time_steps)
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -291,16 +266,11 @@ class VEScheduler(Scheduler):
 @register_diffusion_scheduler('edm')
 class EDMScheduler(Scheduler):
     """
-        EDM Scheduler for managing the time, sigma and coefficient of diffusion SDE/ODE.
-
-        Example Usage:
-            scheduler = EDMScheduler(num_steps=100, sigma_max=100, sigma_min=0.01, timestep='poly-7', verbose=True)
-            for pbar, time, scaling, sigma, factor, scaling_factor in scheduler:
-                print(f"Time: {time}, Scaling: {scaling}, Sigma: {sigma}, Factor: {factor}, Scaling Factor: {scaling_factor}")
+        EDM (Elucidating the Design Space of Diffusion-Based Generative Models) Scheduler.
     """
 
-    def __init__(self, num_steps, sigma_max=100, sigma_min=1e-2, timestep='poly-7', verbose=False):
-        super().__init__(num_steps, verbose)
+    def __init__(self, num_steps, sigma_max=100, sigma_min=1e-2, timestep='poly-7'):
+        super().__init__(num_steps)
         self.sigma_min = sigma_min
         self.sigma_max = sigma_max
 
@@ -308,7 +278,7 @@ class EDMScheduler(Scheduler):
         self.time_steps_fn = lambda r: (sigma_max ** (1 / p) + r * (sigma_min ** (1 / p) - sigma_max ** (1 / p))) ** p
 
         # get time_steps
-        time_steps = self.get_discrete_time_steps(num_steps)
+        time_steps = self.get_discrete_time_steps(self.num_steps)
         self.discretize(time_steps)
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -347,22 +317,15 @@ class EDMScheduler(Scheduler):
 
 @register_diffusion_scheduler('trigflow')
 class TrigFlowScheduler(Scheduler):
-    """
-        TrigFlow Scheduler for managing the time, sigma and coefficient of diffusion SDE/ODE.
-
-        Example Usage:
-            scheduler = TrigFlowScheduler(num_steps=100, sigma_d=0.5, verbose=True)
-            for pbar, time, scaling, sigma, factor, scaling_factor in scheduler:
-                print(f"Time: {time}, Scaling: {scaling}, Sigma: {sigma}, Factor: {factor}, Scaling Factor: {scaling_factor}")
-    """
-    def __init__(self, num_steps, sigma_d=1.0, sigma_max=100, sigma_min=1e-2, verbose=False):
-        super().__init__(num_steps, verbose)
+    """TrigFlow (Simplifying, Stabilizing & Scaling Continuous-Time Consistency Models) Scheduler."""
+    def __init__(self, num_steps, sigma_d=1.0, sigma_max=100, sigma_min=1e-2):
+        super().__init__(num_steps)
         self.sigma_d = sigma_d
         self.sigma_max = sigma_max
         self.sigma_min = sigma_min 
 
         # get time_steps
-        time_steps = self.get_discrete_time_steps(num_steps)
+        time_steps = self.get_discrete_time_steps(self.num_steps)
         self.discretize(time_steps)
 
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -401,10 +364,16 @@ class TrigFlowScheduler(Scheduler):
 
 
 class DiffusionPFODE:
-    def __init__(self, model, scheduler, solver='rk4'):
+    """
+    Diffusion Probability Flow ODE (PF-ODE) for sampling and likelihood computation.
+
+    Implements forward and reverse sampling based on diffusion models, using numerical ODE solvers.
+    """
+    def __init__(self, model, scheduler, solver='euler'):
         self.model = model
         self.scheduler = scheduler
         self.solver = solver
+        self.device = next(model.parameters()).device
     
     def derivative(self, xt, t):
         # refer to Eq. (4) in EDM paper (https://arxiv.org/abs/2206.00364)
@@ -412,13 +381,9 @@ class DiffusionPFODE:
         dst = self.scheduler.get_scaling_derivative(t)
         sigma_t = self.scheduler.get_sigma(t)
         dsigma_t = self.scheduler.get_sigma_derivative(t)
-        # print('derivative')
-        # print(t, st, dst, sigma_t, dsigma_t)
-        # model_output = self.model.score(xt/st, sigma=sigma_t)
-        # print(model_output.std(), model_output.max(), model_output.min())
         return dst / st * xt - st * dsigma_t * sigma_t * self.model.score(xt/st, sigma=sigma_t)
 
-    def sample(self, xT, num_steps=None, return_traj=False):
+    def sample(self, xT, num_steps=None, return_traj=False, requires_grad=False):
         # reverse PF-ODE, from prior Gaussian to data
         if num_steps is None:
             num_steps = self.scheduler.num_steps
@@ -427,18 +392,21 @@ class DiffusionPFODE:
         def _derivative_wrapper(t, xt):
             xt = xt.view(*shape)
             deriv = self.derivative(xt, t)
-            # print(t, xt.std(), xt.max(), xt.min(), deriv.std(), deriv.max(), deriv.min())
             return deriv.flatten(1)
         
         time_steps = self.scheduler.get_discrete_time_steps(num_steps).to(xT.device)
-        x_ode_traj = odeint(_derivative_wrapper, xT.flatten(1), time_steps, rtol=1e-3, atol=1e-3, method=self.solver) # [num_steps, B, D]
+        if requires_grad:
+            xT.requires_grad_(True)
+            x_ode_traj = odeint_adjoint(_derivative_wrapper, xT.flatten(1), time_steps, rtol=1e-3, atol=1e-3, method=self.solver, adjoint_params=(xT))
+        else:
+            x_ode_traj = odeint(_derivative_wrapper, xT.flatten(1), time_steps, rtol=1e-3, atol=1e-3, method=self.solver) # [num_steps, B, D]
         x_ode_traj = x_ode_traj.view(num_steps, *shape)
         
         if return_traj:
             return x_ode_traj
         else:
             return x_ode_traj[-1]
-    
+        
     def inverse(self, x0, num_steps=None, return_traj=False):
         # forward PF-ODE, from data to prior Gaussian
         if num_steps is None:
@@ -448,13 +416,11 @@ class DiffusionPFODE:
         def _derivative_wrapper(t, xt):
             xt = xt.view(*shape)
             deriv = self.derivative(xt, t)
-            # print(t, xt.std(), xt.max(), xt.min(), deriv.std(), deriv.max(), deriv.min())
             return deriv.flatten(1)
         
         reverse_time_steps = self.scheduler.get_discrete_time_steps(num_steps).to(x0.device)
         # reverse timestep
         time_steps = reverse_time_steps.flip(0)
-        # print(time_steps)
         x_ode_traj = odeint(_derivative_wrapper, x0.flatten(1), time_steps, method=self.solver)
         x_ode_traj = x_ode_traj.view(num_steps, *shape)
 
@@ -478,6 +444,8 @@ class DiffusionPFODE:
         # get ODE trajectory
         if num_steps is None:
             num_steps = self.scheduler.num_steps
+        else:
+            num_steps = num_steps + 1 # include the initial step
         traj = self.inverse(x0, num_steps, True)
         reverse_time_steps = self.scheduler.get_discrete_time_steps(num_steps).to(x0.device)
         time_steps = reverse_time_steps.flip(0)
@@ -503,25 +471,31 @@ class DiffusionPFODE:
         bit_dim = - logp / np.log(2) / np.prod(x0.shape[1:]) + 7
         return bit_dim
 
-    def get_start(self, ref):
-        x_start = torch.randn_like(ref) * self.scheduler.get_prior_sigma()
+    def get_start(self, batch_size):
+        in_shape = self.model.get_in_shape()
+        x_start = torch.randn(batch_size, *in_shape, device=self.device) * self.scheduler.get_prior_sigma()
         return x_start
 
 
-# TODO: Implement DiffusionSDE
 class DiffusionSDE:
+    """
+    Diffusion Stochastic Differential Equation (Diffusion SDE) for sampling via forward and reverse SDE processes.
+    """
     def __init__(self, model, scheduler, solver='euler'):
         self.model = model
         self.scheduler = scheduler
         self.solver = solver
+        self.device = next(model.parameters()).device
+        if solver != 'euler':
+            raise NotImplementedError
     
-    def forward_sde(self, x0, num_steps=None, return_traj=False):
+    def forward_sde(self, x0, t, num_steps=None, return_traj=False):
         pass
 
     def reverse_sde(self, x0, num_steps=None, return_traj=False):
         pass
 
-    def get_start(self, ref):
-        x_start = torch.randn_like(ref) * self.scheduler.get_prior_sigma()
+    def get_start(self, batch_size):
+        in_shape = self.model.get_in_shape()
+        x_start = torch.randn(batch_size, *in_shape, device=self.device) * self.scheduler.get_prior_sigma()
         return x_start
-

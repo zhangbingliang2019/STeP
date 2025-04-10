@@ -1,7 +1,6 @@
 import ehtim.statistics.dataframes as ehdf
 import ehtim.observing.obs_helpers as obsh
-import ehtim.imaging.imager_utils as iu
-import ehtim.modeling.modeling_utils as mu
+from ehtim.obsdata import Obsdata 
 import pandas as pd
 import torch
 import numpy as np
@@ -10,6 +9,15 @@ from piq import psnr
 from ehtim.observing.pulses import trianglePulse2D
 import torch.nn.functional as F
 from .base import Operator, register_operator
+
+# fix one bug in ehtim
+class ObsdataWrapper(Obsdata):
+    def tlist(self, conj=False, t_gather=0., scan_gather=False):
+        datalist = super().tlist(conj=conj, t_gather=t_gather, scan_gather=scan_gather)
+        try:
+            return np.array(datalist, dtype=self.data.dtype)
+        except:
+            return np.array(datalist, dtype=object)
 
 
 class BlackHoleObservation(object):
@@ -206,6 +214,7 @@ class BlackHoleImagingTorch(Operator):
                             elevmin=elevmin, elevmax=elevmax,
                             no_elevcut_space=False,
                             fix_theta_GMST=False)
+        ref_obs.__class__ = ObsdataWrapper
     
         # A_vis matrix, sigma & time list
         A_vis_list = []
