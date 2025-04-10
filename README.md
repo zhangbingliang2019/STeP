@@ -2,11 +2,15 @@
 
 ### 📝 [Paper]() | 🌐 [Project Page](https://zhangbingliang2019.github.io/STeP/)
 
+![teaser](README.assets/teaser.png)
+
+## 🔥 Introduction
+
+We demonstrate the feasibility of practical and accessible **spatiotemporal diffusion priors** by fine-tuning **latent video diffusion models** from pretrained image diffusion models using limited videos in specific domains. Leveraging this plug-and-play spatiotemporal diffusion prior, we introduce a general and scalable framework for solving video inverse problems. Our framework enables the generation of diverse, high-fidelity video reconstructions that not only fit observations but also recover multi-modal solutions. 
 
 
 
-
-## Get Started 
+## 🚀 Get Started 
 
 ### 1. Prepare the environment
 
@@ -73,6 +77,13 @@ It will generate `num_samples` in `task.target_dir`.
 
 
 ### 4. Training Video Diffusion Model Prior
+
+Training dataset:
+
+| Dataset     | Status  |
+| ----------- | ------- |
+| blackhole   | private |
+| dynamic-MRI | TBD     |
 
 Training configs are in folder `configs/training`.
 
