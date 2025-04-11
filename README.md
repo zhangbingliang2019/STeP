@@ -1,6 +1,6 @@
 # STeP: a general and scalable framework for solving video inverse problems with spatiotemporal diffusion priors
 
-### 📝 [Paper]() | 🌐 [Project Page](https://zhangbingliang2019.github.io/STeP/)
+### 📝 [Paper](https://arxiv.org/abs/2504.07549) | 🌐 [Project Page](https://zhangbingliang2019.github.io/STeP/)
 
 ![teaser](README.assets/teaser.png)
 
@@ -104,4 +104,20 @@ It will sequentially train:
 3. a spatiotemporal video diffusion model
 
 
+
+## Citation
+
+If you find our work interesting, please consider citing
+
+```
+@misc{zhang2025stepgeneralscalableframework,
+      title={STeP: A General and Scalable Framework for Solving Video Inverse Problems with Spatiotemporal Diffusion Priors}, 
+      author={Bingliang Zhang and Zihui Wu and Berthy T. Feng and Yang Song and Yisong Yue and Katherine L. Bouman},
+      year={2025},
+      eprint={2504.07549},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2504.07549}, 
+}
+```
 
