@@ -171,3 +171,4 @@ docker-compose.override.yml
 !assets/**
 !icons/**
 .DS_Store
+assets/video.mp4
