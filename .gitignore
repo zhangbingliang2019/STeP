@@ -169,4 +169,5 @@ docker-compose.override.yml
 
 !step.png
 !assets/**
+!icons/**
 .DS_Store
