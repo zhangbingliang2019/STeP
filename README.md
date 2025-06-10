@@ -1,4 +1,4 @@
-# STeP: a general and scalable framework for solving video inverse problems with spatiotemporal diffusion priors
+# STeP: a framework for solving scientific video inverse problems with spatiotemporal diffusion priors
 
 ### 📝 [Paper](https://arxiv.org/abs/2504.07549) | 🌐 [Project Page](https://zhangbingliang2019.github.io/STeP/)
 
